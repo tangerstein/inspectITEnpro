@@ -26,7 +26,7 @@ public class StringFilterPanel<T> extends JPanel {
 	 * @param map
 	 *            The value to {@MarkerFilterElement} map.
 	 */
-	public StringFilterPanel(final FilterValueObject filterValueObject, Set<T> keys, NavigableMap<T, MarkerFilterElement> map) {
+	public StringFilterPanel(final FilterValueObject filterValueObject, Set<T> keys, NavigableMap<T, MarkerFilterElement> map, Set<String> toHide) {
 		for (Object value : keys) {
 			JPanel newCboxPanel = new JPanel(new BorderLayout());
 			newCboxPanel.setBorder(new LineBorder(map.get(value).style().getBackColor(), 3));
