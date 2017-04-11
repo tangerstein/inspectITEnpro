@@ -93,85 +93,92 @@ public class AgentRestfulService {
 	@ResponseBody
 	public void addNewMobileRoot(@RequestBody String json) {
 
-		Gson gson = getGson();
-		MobileRoot mobileRoot = gson.fromJson(json, MobileRoot.class);
-		HashMap<Long, List<AbstractSpan>> spansFromMobileRoot = new HashMap<Long, List<AbstractSpan>>();
-
-		for (SpanImpl span : mobileRoot.spans) {
-			span.setTag("deviceID", mobileRoot.getDeviceID());
-			AbstractSpan abstractSpan = SpanTransformer.transformSpan(span);
-			abstractSpan.setPlatformIdent(-1);
-			abstractSpan.setMethodIdent(0);
-			abstractSpan.setSensorTypeIdent(0);
-			idGenerator.assignObjectAnId(abstractSpan);
-
-			long traceId = abstractSpan.getSpanIdent().getTraceId();
-
-			if (!spansFromMobileRoot.containsKey(traceId)) {
-				spansFromMobileRoot.put(traceId, new ArrayList<AbstractSpan>());
+		new Thread(new Runnable() {
+			
+			@Override
+			public void run() {
+					
+				
+				Gson gson = getGson();
+				MobileRoot mobileRoot = gson.fromJson(json, MobileRoot.class);
+				HashMap<Long, List<AbstractSpan>> spansFromMobileRoot = new HashMap<Long, List<AbstractSpan>>();
+			
+				for (SpanImpl span : mobileRoot.spans) {
+					span.setTag("deviceID", mobileRoot.getDeviceID());
+					AbstractSpan abstractSpan = SpanTransformer.transformSpan(span);
+					abstractSpan.setPlatformIdent(-1);
+					abstractSpan.setMethodIdent(0);
+					abstractSpan.setSensorTypeIdent(0);
+					idGenerator.assignObjectAnId(abstractSpan);
+			
+					long traceId = abstractSpan.getSpanIdent().getTraceId();
+			
+					if (!spansFromMobileRoot.containsKey(traceId)) {
+						spansFromMobileRoot.put(traceId, new ArrayList<AbstractSpan>());
+					}
+					spansFromMobileRoot.get(traceId).add(abstractSpan);
+			
+					buffer.put(new BufferElement<DefaultData>(abstractSpan));
+				}
+			
+				for (MobilePeriodicMeasurement measurement : mobileRoot.measurements) {
+					measurement.setDeviceID(mobileRoot.getDeviceID());
+					measurement.setPlatformIdent(-2);
+					measurement.setSensorTypeIdent(0);
+					idGenerator.assignObjectAnId(measurement);
+			
+					measurement.setTimeStamp(new Timestamp(measurement.getTimestamp()));
+			
+					buffer.put(new BufferElement<DefaultData>(measurement));
+				}
+			
+				// Get all PlatformIdents
+				List<PlatformIdent> platformIdentList = new ArrayList<PlatformIdent>();
+				Collection<PlatformIdent> platformIdents = platformCache.getCleanPlatformIdents();
+				for (PlatformIdent platIdent : platformIdents) {
+					platformIdentList.add(platIdent);
+				}
+			
+				List<InvocationSequenceData> listSequences = dataAccessService.getInvocationSequenceOverview(0, -1, null);
+				List<InvocationSequenceData> listSequencesDetail = new LinkedList<InvocationSequenceData>();
+			
+				// Get all invocs
+				for (InvocationSequenceData invocationSequenceData : listSequences) {
+					InvocationSequenceData invocDetail = dataAccessService.getInvocationSequenceDetail(invocationSequenceData);
+					// is already nested sequence?
+					if (invocDetail != null) {
+						listSequencesDetail.add(invocDetail);
+					}
+				}
+				
+				if(timeoutFound(spansFromMobileRoot)){
+					try {
+						Thread.sleep(10000);
+					} catch (InterruptedException e) {
+						// TODO Auto-generated catch block
+						e.printStackTrace();
+					}
+				} else{
+					try {
+						Thread.sleep(2000);
+					} catch (InterruptedException e) {
+						// TODO Auto-generated catch block
+						e.printStackTrace();
+					}
+				}
+				InspectITTraceConverter converter = new InspectITTraceConverter();
+			
+				// convert spans and trigger diagnoseIT
+				for (Entry<Long, List<AbstractSpan>> entry : spansFromMobileRoot.entrySet()) {
+					HashSet<Span> abstractSpans = new HashSet<Span>();
+					abstractSpans.addAll(spansService.getSpans(entry.getKey()));
+					abstractSpans.addAll(entry.getValue());
+					Trace trace = converter.convertTraces(listSequencesDetail, platformIdentList,
+							new ArrayList<Span>(abstractSpans), mobileRoot.measurements);
+					Launcher.startLauncher(trace, RulePackage.MobilePackage);
+				}		
 			}
-			spansFromMobileRoot.get(traceId).add(abstractSpan);
-
-			buffer.put(new BufferElement<DefaultData>(abstractSpan));
-		}
-
-		for (MobilePeriodicMeasurement measurement : mobileRoot.measurements) {
-			measurement.setDeviceID(mobileRoot.getDeviceID());
-			measurement.setPlatformIdent(-2);
-			measurement.setSensorTypeIdent(0);
-			idGenerator.assignObjectAnId(measurement);
-
-			measurement.setTimeStamp(new Timestamp(measurement.getTimestamp()));
-
-			buffer.put(new BufferElement<DefaultData>(measurement));
-		}
-
-		// Get all PlatformIdents
-		List<PlatformIdent> platformIdentList = new ArrayList<PlatformIdent>();
-		Collection<PlatformIdent> platformIdents = platformCache.getCleanPlatformIdents();
-		for (PlatformIdent platIdent : platformIdents) {
-			platformIdentList.add(platIdent);
-		}
-
-		List<InvocationSequenceData> listSequences = dataAccessService.getInvocationSequenceOverview(0, -1, null);
-		List<InvocationSequenceData> listSequencesDetail = new LinkedList<InvocationSequenceData>();
-
-		// Get all invocs
-		for (InvocationSequenceData invocationSequenceData : listSequences) {
-			InvocationSequenceData invocDetail = dataAccessService.getInvocationSequenceDetail(invocationSequenceData);
-			// is already nested sequence?
-			if (invocDetail != null) {
-				listSequencesDetail.add(invocDetail);
-			}
-		}
-		
-		if(timeoutFound(spansFromMobileRoot)){
-			try {
-				Thread.sleep(10000);
-			} catch (InterruptedException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			}
-		} else{
-			try {
-				Thread.sleep(2000);
-			} catch (InterruptedException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			}
-		}
-		InspectITTraceConverter converter = new InspectITTraceConverter();
-
-		// convert spans and trigger diagnoseIT
-		for (Entry<Long, List<AbstractSpan>> entry : spansFromMobileRoot.entrySet()) {
-			HashSet<Span> abstractSpans = new HashSet<Span>();
-			abstractSpans.addAll(spansService.getSpans(entry.getKey()));
-			abstractSpans.addAll(entry.getValue());
-			Trace trace = converter.convertTraces(listSequencesDetail, platformIdentList,
-					new ArrayList<Span>(abstractSpans), mobileRoot.measurements);
-			Launcher.startLauncher(trace, RulePackage.MobilePackage);
-		}
-
+		}).start();
 	}
 
 	private boolean timeoutFound(HashMap<Long, List<AbstractSpan>> spansFromMobileRoot) {
