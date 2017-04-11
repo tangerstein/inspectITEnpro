@@ -84,4 +84,9 @@ public interface MobileTags extends ExtraTags {
 	 * URL of the http request.
 	 */
 	String HTTP_URL = "http.url";
+
+	/**
+	 * Method of the http request.
+	 */
+	String HTTP_METHOD = "http.method";
 }

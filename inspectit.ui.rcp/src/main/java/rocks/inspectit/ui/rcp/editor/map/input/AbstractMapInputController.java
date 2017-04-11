@@ -10,11 +10,12 @@ import org.eclipse.core.runtime.Assert;
 import org.openstreetmap.gui.jmapviewer.Coordinate;
 import org.openstreetmap.gui.jmapviewer.interfaces.ICoordinate;
 
+import rocks.inspectit.shared.all.tracing.constants.MobileTags;
 import rocks.inspectit.shared.all.tracing.data.AbstractSpan;
 import rocks.inspectit.ui.rcp.InspectITConstants;
 import rocks.inspectit.ui.rcp.editor.inputdefinition.InputDefinition;
+import rocks.inspectit.ui.rcp.editor.map.filter.FilterTypeMapping;
 import rocks.inspectit.ui.rcp.editor.map.filter.MapFilter;
-import rocks.inspectit.ui.rcp.editor.map.filter.NumericMapFilter;
 import rocks.inspectit.ui.rcp.editor.map.filter.StringMapFilter;
 import rocks.inspectit.ui.rcp.editor.map.model.InspectITClusterMarker;
 import rocks.inspectit.ui.rcp.editor.map.model.InspectITMarker;
@@ -109,13 +110,9 @@ public abstract class AbstractMapInputController implements MapInputController {
 			resetFilters();
 			for (AbstractSpan marker : data) {
 				Map<String, String> tags = marker.getTags();
-				addFilterValue(InspectITConstants.DURATION, String.valueOf(marker.getDuration()));
+				addFilterValue(InspectITConstants.DURATION, marker.getDuration());
 				for (Entry<String, String> s : tags.entrySet()) {
-					String key = s.getKey();
-					if (key.contains("latitude") || key.contains("longitude")) {
-						continue;
-					}
-					addFilterValue(key, s.getValue());
+					addFilterValue(s.getKey(), s.getValue());
 				}
 			}
 			// filters are to be reset only once!
@@ -127,20 +124,17 @@ public abstract class AbstractMapInputController implements MapInputController {
 
 	}
 
-	private void addFilterValue(String key, String value) {
-		MapFilter filterType;
+	private void addFilterValue(String key, Object value) {
+		MapFilter filter;
 		if (filterTypes.containsKey(key)) {
-			filterType = filterTypes.get(key);
+			filter = filterTypes.get(key);
 		} else {
-			try {
-				Double.parseDouble(value);
-				filterType = new NumericMapFilter<Double>(key, mapSettings.isColoredMarkers());
-			} catch (NumberFormatException e) {
-				filterType = new StringMapFilter<String>(key, mapSettings.isColoredMarkers());
+			if ((filter = FilterTypeMapping.getMapFilter(key, mapSettings.isColoredMarkers())) == null) {
+				return;
 			}
 		}
-		filterType.addValue(value);
-		filterTypes.put(key, filterType);
+		filter.addValue(value);
+		filterTypes.put(key, filter);
 	}
 
 	/**
@@ -170,9 +164,9 @@ public abstract class AbstractMapInputController implements MapInputController {
 
 	private double calculateRadius() {
 		if (mapSettings.getZoomLevel() < 2) {
-			return 15.00;
+			return mapSettings.getClusteringConstant();
 		}
-		return 15 / (Math.exp((mapSettings.getZoomLevel() * mapSettings.getClusteringCoefficient())));
+		return mapSettings.getClusteringConstant() / (Math.exp((mapSettings.getZoomLevel() * mapSettings.getClusteringCoefficient())));
 
 	}
 
@@ -245,10 +239,10 @@ public abstract class AbstractMapInputController implements MapInputController {
 
 	private InspectITMarker createMarker(AbstractSpan span) {
 		Map<String, String> tags = span.getTags();
-		if (tags.containsKey("http.request.latitude") && tags.containsKey("http.request.longitude")) {
-			return new InspectITSpanMarker(span, new Coordinate(Double.parseDouble(tags.get("http.request.latitude")), Double.parseDouble(tags.get("http.request.longitude"))));
-		} else if (tags.containsKey("http.response.latitude") && tags.containsKey("http.response.longitude")) {
-			return new InspectITSpanMarker(span, new Coordinate(Double.parseDouble(tags.get("http.response.latitude")), Double.parseDouble(tags.get("http.response.longitude"))));
+		if (tags.containsKey(MobileTags.HTTP_REQUEST_LATITUDE) && tags.containsKey(MobileTags.HTTP_REQUEST_LONGITUDE)) {
+			return new InspectITSpanMarker(span, new Coordinate(Double.parseDouble(tags.get(MobileTags.HTTP_REQUEST_LATITUDE)), Double.parseDouble(tags.get(MobileTags.HTTP_REQUEST_LONGITUDE))));
+		} else if (tags.containsKey(MobileTags.HTTP_RESPONSE_LATITUDE) && tags.containsKey(MobileTags.HTTP_RESPONSE_LONGITUDE)) {
+			return new InspectITSpanMarker(span, new Coordinate(Double.parseDouble(tags.get(MobileTags.HTTP_RESPONSE_LATITUDE)), Double.parseDouble(tags.get(MobileTags.HTTP_RESPONSE_LONGITUDE))));
 		} else {
 			return null;
 		}

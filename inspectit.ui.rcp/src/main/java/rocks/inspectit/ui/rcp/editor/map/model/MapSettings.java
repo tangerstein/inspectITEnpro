@@ -32,6 +32,11 @@ public class MapSettings {
 	double clusteringCoefficient;
 
 	/**
+	 * The current cluster constant.
+	 */
+	double clusteringConstant;
+
+	/**
 	 * Flag for colored markers (if false: transparent markers).
 	 */
 	boolean coloredMarkers;
@@ -42,7 +47,7 @@ public class MapSettings {
 	boolean clusteredMarkers;
 
 	public enum settings {
-		clusteredMarkers, coloredMarkers, zoomLevel, clusteringTreshhold, resetFilters, clusteringCoefficient;
+		clusteredMarkers, clusteringConstant, coloredMarkers, zoomLevel, clusteringTreshhold, resetFilters, clusteringCoefficient;
 
 		@Override
 		public String toString() {
@@ -59,6 +64,8 @@ public class MapSettings {
 				return "resetFilters";
 			case clusteringCoefficient:
 				return "clusteringCoefficient";
+			case clusteringConstant:
+				return "clusteringConstant";
 			}
 			return "";
 		}
@@ -80,6 +87,7 @@ public class MapSettings {
 		clusteringCoefficient = 0.55;
 		coloredMarkers = true;
 		clusteredMarkers = true;
+		clusteringConstant = 15.00;
 	}
 
 	public void setSetting(String name, Object value) {
@@ -95,6 +103,8 @@ public class MapSettings {
 			resetFilters = (boolean) value;
 		} else if (settings.clusteringCoefficient.toString().equals(name)) {
 			clusteringCoefficient = (double) value;
+		} else if (settings.clusteringConstant.toString().equals(name)) {
+			clusteringConstant = (double) value;
 		}
 	}
 
@@ -172,6 +182,25 @@ public class MapSettings {
 	 */
 	public void setClusteringCoefficient(double clusteringCoefficient) {
 		this.clusteringCoefficient = clusteringCoefficient;
+	}
+
+	/**
+	 * Gets {@link #clusteringConstant}.
+	 *
+	 * @return {@link #clusteringConstant}
+	 */
+	public double getClusteringConstant() {
+		return this.clusteringConstant;
+	}
+
+	/**
+	 * Sets {@link #clusteringConstant}.
+	 *
+	 * @param clusteringConstant
+	 *            New value for {@link #clusteringConstant}
+	 */
+	public void setClusteringConstant(double clusteringConstant) {
+		this.clusteringConstant = clusteringConstant;
 	}
 
 	/**
