@@ -25,8 +25,8 @@ public class NumericFilterPanel extends JPanel {
 		this.filterValueObject = filterValueObject;
 		self = this;
 		this.setLayout(new FlowLayout(FlowLayout.CENTER));
-		lowerBound = initSlider(new LowerSliderStateChangeListener(), totalRange.getLowerBound(), totalRange.getUpperBound(), filteredRange.getLowerBound());
-		upperBound = initSlider(new UpperSliderStateChangeListener(), totalRange.getLowerBound(), totalRange.getUpperBound(), filteredRange.getUpperBound());
+		lowerBound = initSlider(new LowerSliderStateChangeListener(), totalRange.getLowerBound(), filteredRange.getUpperBound(), filteredRange.getLowerBound());
+		upperBound = initSlider(new UpperSliderStateChangeListener(), filteredRange.getLowerBound(), totalRange.getUpperBound(), filteredRange.getUpperBound());
 
 		JPanel rangeValuePanel = createRangeValuePanel();
 		this.add(lowerBound);
@@ -67,13 +67,11 @@ public class NumericFilterPanel extends JPanel {
 
 		@Override
 		public void stateChanged(ChangeEvent e) {
-			adaptSlider(upperBound, lowerBound.getValue(), upperBound.getMaximum(), upperBound.getValue());
-			upperBound.revalidate();
-			self.revalidate();
-
 			lowerRangeValue.setText(lowerBound.getValue() + "");
 			// Only trigger reloading of the map after selection is done
-			if (!lowerBound.getValueIsAdjusting() && !upperBound.getValueIsAdjusting()) {
+			if (!lowerBound.getValueIsAdjusting()) {
+				adaptSlider(upperBound, lowerBound.getValue(), upperBound.getMaximum(), upperBound.getValue());
+				upperBound.revalidate();
 				filterValueObject.selectionChanged(new NumericRange(lowerBound.getValue(), upperBound.getValue()));
 			}
 		}
@@ -83,13 +81,11 @@ public class NumericFilterPanel extends JPanel {
 	private class UpperSliderStateChangeListener implements ChangeListener {
 		@Override
 		public void stateChanged(ChangeEvent e) {
-			adaptSlider(lowerBound, lowerBound.getMinimum(), upperBound.getValue(), lowerBound.getValue());
-			lowerBound.revalidate();
-			self.revalidate();
-
 			upperRangeValue.setText(upperBound.getValue() + "");
 			// Only trigger reloading of the map after selection is done
-			if (!lowerBound.getValueIsAdjusting() && !upperBound.getValueIsAdjusting()) {
+			if (!upperBound.getValueIsAdjusting()) {
+				adaptSlider(lowerBound, lowerBound.getMinimum(), upperBound.getValue(), lowerBound.getValue());
+				lowerBound.revalidate();
 				filterValueObject.selectionChanged(new NumericRange(lowerBound.getValue(), upperBound.getValue()));
 			}
 		}
@@ -104,5 +100,11 @@ public class NumericFilterPanel extends JPanel {
 		return (upperBound - lowerBound) / 9;
 	}
 
+	private String printLowerSlider() {
+		return "Lower: " + lowerBound.getMinimum() + ", " + lowerBound.getValue() + ", " + lowerBound.getMaximum();
+	}
 
+	private String printUpperSlider() {
+		return "Upper: " + upperBound.getMinimum() + ", " + upperBound.getValue() + ", " + upperBound.getMaximum();
+	}
 }
