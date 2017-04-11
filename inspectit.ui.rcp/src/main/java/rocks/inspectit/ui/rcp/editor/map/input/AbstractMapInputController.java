@@ -106,17 +106,18 @@ public abstract class AbstractMapInputController implements MapInputController {
 	 */
 	protected void refreshFilters(List<AbstractSpan> data) {
 		if (mapSettings.isResetFilters()) {
-			resetFilters();
-			for (AbstractSpan marker : data) {
-				Map<String, String> tags = marker.getTags();
-				addFilterValue(InspectITConstants.DURATION, marker.getDuration());
-				for (Entry<String, String> s : tags.entrySet()) {
-					addFilterValue(s.getKey(), s.getValue());
-				}
-			}
-			// filters are to be reset only once!
 			mapSettings.setResetFilters(false);
+			resetFilters();
 		}
+		for (AbstractSpan marker : data) {
+			Map<String, String> tags = marker.getTags();
+			addFilterValue(InspectITConstants.DURATION, marker.getDuration());
+			for (Entry<String, String> s : tags.entrySet()) {
+				addFilterValue(s.getKey(), s.getValue());
+			}
+		}
+		// filters are to be reset only once!
+
 		for (MapFilter t : filterTypes.values()) {
 			t.updateFilter();
 		}

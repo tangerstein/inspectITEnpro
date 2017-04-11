@@ -1,11 +1,12 @@
 package rocks.inspectit.ui.rcp.editor.map.input;
 
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
+import java.util.Map;
 
+import rocks.inspectit.shared.all.tracing.constants.MobileTags;
 import rocks.inspectit.shared.all.tracing.data.AbstractSpan;
+import rocks.inspectit.shared.all.tracing.data.Span;
 import rocks.inspectit.shared.cs.cmr.service.ISpanService;
 import rocks.inspectit.ui.rcp.editor.inputdefinition.InputDefinition;
 
@@ -33,17 +34,12 @@ public class TraceMapInputController extends AbstractMapInputController {
 
 	@Override
 	public void setData(List<? extends Object> data) {
-		Set<Long> traceIds = new HashSet<>();
-		for (Object rootSpan : data) {
-			traceIds.add(((AbstractSpan) rootSpan).getSpanIdent().getTraceId());
+		if (spans.isEmpty()) {
+			mapSettings.setResetFilters(true);
 		}
-		List<AbstractSpan> list = new ArrayList<>();
-		for (Long l : traceIds) {
-			list.addAll((List<AbstractSpan>) spanService.getSpans(l));
-		}
-		spans = list;
+		retrieveChildSpans(data);
 		System.out.println(spans.size());
-		mapSettings.setResetFilters(true);
+
 		refreshFilters(spans);
 	}
 
@@ -51,13 +47,31 @@ public class TraceMapInputController extends AbstractMapInputController {
 	public void setDataSelection(List<? extends Object> data) {
 		selection = (List<AbstractSpan>) data;
 		if (!selection.isEmpty()) {
-			List<AbstractSpan> list = new ArrayList<>();
-			for (Object rootSpan : data) {
-				list.addAll((List<AbstractSpan>) spanService.getSpans(((AbstractSpan) rootSpan).getSpanIdent().getTraceId()));
-			}
-			spans = list;
+			retrieveChildSpans(data);
 		}
 		System.out.println(selection.size());
+	}
+
+	private void retrieveChildSpans(List<? extends Object> data) {
+		List<AbstractSpan> list = new ArrayList<>();
+		for (Object rootSpan : data) {
+			for (Span span : spanService.getSpans(((AbstractSpan) rootSpan).getSpanIdent().getTraceId())) {
+				Map<String, String> tags = span.getTags();
+				if ((tags.containsKey(MobileTags.HTTP_REQUEST_LATITUDE) && tags.containsKey(MobileTags.HTTP_REQUEST_LONGITUDE))
+						|| (tags.containsKey(MobileTags.HTTP_RESPONSE_LATITUDE) && tags.containsKey(MobileTags.HTTP_RESPONSE_LONGITUDE))) {
+					/*
+					 * usually use cases do not last long enough in order to have a significant
+					 * difference with respect to the location. Adding all spans of a root span
+					 * would result in many markers being placed at exactly the same location.
+					 * Nevertheless it might be a good idea to check for it and define a specific
+					 * minimum difference in order to be picked up separately.
+					 */
+					list.add((AbstractSpan) span);
+					break;
+				}
+			}
+		}
+		spans = list;
 	}
 
 	@Override
