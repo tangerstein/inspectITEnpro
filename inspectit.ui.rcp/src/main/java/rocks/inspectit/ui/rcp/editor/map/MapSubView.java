@@ -167,11 +167,7 @@ public class MapSubView extends AbstractSubView {
 		filterMap = mapInputController.getMapFilter();
 		optionsMenu.removeAll();
 		optionsMenu.add(createOptionMenu(mapInputController.getSettings()));
-		filterValuePanel.removeAll();
-		if ((selection != null) && !InspectITConstants.NOFILTER.equals(selection)) {
-			JPanel filterValues = filterMap.get(selection).getPanel(new FilterValueObject());
-			filterValuePanel.add(filterValues);
-		}
+		updateFilterValues(mapInputController.getSettings());
 		filterValuePanel.updateUI();
 		optionsMenu.updateUI();
 		mapViewer.updateUI();
@@ -259,14 +255,31 @@ public class MapSubView extends AbstractSubView {
 		return menu;
 	}
 
+	private void updateFilterValues(Map<String, Boolean> settings) {
+			filterValuePanel.removeAll();
+			if ((selection != null) && !InspectITConstants.NOFILTER.equals(selection)) {
+				JPanel filterValues = filterMap.get(selection).getPanel(new FilterValueObject());
+				filterValuePanel.add(filterValues);
+			}
+	}
+
 	private void refreshKeyBox() {
-		tagComboBox.removeAllItems();
+		// tagComboBox.removeAllItems();
 		// add this manually in order to have it as first entry
-		tagComboBox.addItem(InspectITConstants.NOFILTER);
-		selection = InspectITConstants.NOFILTER;
+		if (tagComboBox.getComponentCount() == 0) {
+			tagComboBox.addItem(InspectITConstants.NOFILTER);
+			selection = InspectITConstants.NOFILTER;
+		}
 		if (filterMap.entrySet() != null) {
 			for (Entry<String, MapFilter> tag : filterMap.entrySet()) {
-				if (!tag.getKey().equals(InspectITConstants.NOFILTER)) {
+				Boolean unknownKey = true;
+				for (int index = 0; index < tagComboBox.getItemCount(); index++) {
+					if (tagComboBox.getItemAt(index).equals(tag.getKey())) {
+						unknownKey = false;
+						break;
+					}
+				}
+				if (unknownKey) {
 					tagComboBox.addItem(tag.getKey());
 				}
 			}

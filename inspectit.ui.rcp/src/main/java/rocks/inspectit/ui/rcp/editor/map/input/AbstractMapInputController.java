@@ -16,7 +16,6 @@ import rocks.inspectit.ui.rcp.InspectITConstants;
 import rocks.inspectit.ui.rcp.editor.inputdefinition.InputDefinition;
 import rocks.inspectit.ui.rcp.editor.map.filter.FilterTypeMapping;
 import rocks.inspectit.ui.rcp.editor.map.filter.MapFilter;
-import rocks.inspectit.ui.rcp.editor.map.filter.StringMapFilter;
 import rocks.inspectit.ui.rcp.editor.map.model.InspectITClusterMarker;
 import rocks.inspectit.ui.rcp.editor.map.model.InspectITMarker;
 import rocks.inspectit.ui.rcp.editor.map.model.InspectITSpanMarker;
@@ -98,7 +97,7 @@ public abstract class AbstractMapInputController implements MapInputController {
 
 	private void resetFilters() {
 		filterTypes.clear();
-		filterTypes.put(InspectITConstants.NOFILTER, new StringMapFilter<>(InspectITConstants.NOFILTER, mapSettings.isColoredMarkers()));
+		filterTypes.put(InspectITConstants.NOFILTER, FilterTypeMapping.getMapFilter(InspectITConstants.NOFILTER, mapSettings.isColoredMarkers()));
 	}
 
 	/**
@@ -121,6 +120,7 @@ public abstract class AbstractMapInputController implements MapInputController {
 		for (MapFilter t : filterTypes.values()) {
 			t.updateFilter();
 		}
+
 
 	}
 

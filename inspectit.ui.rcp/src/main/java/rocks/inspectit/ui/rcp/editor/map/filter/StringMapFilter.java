@@ -15,6 +15,7 @@ public class StringMapFilter<T> extends AbstractMapFilter<T> {
 
 	Set<String> values;
 	Set<T> toHide;
+	StringFilterPanel filterPanel;
 
 	public StringMapFilter(String tagKey, boolean colored) {
 		super(tagKey, colored);
@@ -55,7 +56,7 @@ public class StringMapFilter<T> extends AbstractMapFilter<T> {
 	 */
 	@Override
 	public JPanel getPanel(FilterValueObject filterValueObject) {
-		StringFilterPanel temp = new StringFilterPanel(filterValueObject, this.getKeys(), filterMap);
+		StringFilterPanel temp = new StringFilterPanel(filterValueObject, this.getKeys(), filterMap, toHide);
 		return temp;
 	}
 
