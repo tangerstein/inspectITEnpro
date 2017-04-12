@@ -1,7 +1,6 @@
 package rocks.inspectit.ui.rcp.editor.map;
 
 import java.awt.BorderLayout;
-import java.awt.Color;
 import java.awt.FlowLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -15,15 +14,12 @@ import java.util.Map.Entry;
 import java.util.Objects;
 import java.util.Set;
 
-import javax.swing.JButton;
 import javax.swing.JCheckBoxMenuItem;
 import javax.swing.JComboBox;
-import javax.swing.JLabel;
+import javax.swing.JComponent;
 import javax.swing.JMenu;
 import javax.swing.JMenuBar;
 import javax.swing.JPanel;
-import javax.swing.JTextField;
-import javax.swing.border.LineBorder;
 
 import org.eclipse.jface.viewers.ISelectionProvider;
 import org.eclipse.swt.SWT;
@@ -106,16 +102,17 @@ public class MapSubView extends AbstractSubView {
 		swtAwtComponent = new Composite(parent, SWT.EMBEDDED);
 		java.awt.Frame frame = SWT_AWT.new_Frame(swtAwtComponent);
 		tagComboBox = new JComboBox<>();
-		filterValuePanel = new JPanel();
+		filterValuePanel = new JPanel(new BorderLayout());
 		optionsMenu = new JMenuBar();
 		optionsMenu.add(createOptionMenu(mapInputController.getSettings()));
 		filter = new JPanel();
-		filter.setLayout(new FlowLayout(FlowLayout.LEFT));
-		filter.add(createParameterPanel());
-		filter.add(optionsMenu);
-		filter.add(tagComboBox);
+		filter.setLayout(new BorderLayout());
+		JPanel centerPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
+		centerPanel.add(optionsMenu);
+		centerPanel.add(tagComboBox);
+		filter.add(centerPanel, BorderLayout.WEST);
+		filter.add(filterValuePanel, BorderLayout.CENTER);
 
-		filter.add(filterValuePanel);
 		frame.setLayout(new BorderLayout());
 		mapViewer = new JMapViewer() {
 
@@ -261,38 +258,11 @@ public class MapSubView extends AbstractSubView {
 		return menu;
 	}
 
-	private JPanel createParameterPanel() {
-		JPanel parameterPanel = new JPanel(new FlowLayout());
-		parameterPanel.setBorder(new LineBorder(Color.BLACK, 1));
-		JLabel thresholdLabel = new JLabel("Clustering Threshold:");
-		final JTextField thresholdTextfield = new JTextField(5);
-		thresholdTextfield.setText("" + MapSettings.getInstance().getClusteringTreshhold());
-		JButton thresholdButton = new JButton("Save Threshold");
-		thresholdButton.addActionListener(new ActionListener() {
-
-			@Override
-			public void actionPerformed(ActionEvent e) {
-				try {
-					MapSettings.getInstance().setClusteringTreshhold(Integer.parseInt(thresholdTextfield.getText()));
-					doRefresh();
-				} catch (NumberFormatException ex) {
-					// Do nothing. Later usability: tell the user whats wrong
-				}
-			}
-		});
-
-		parameterPanel.add(thresholdLabel);
-		parameterPanel.add(thresholdTextfield);
-		parameterPanel.add(thresholdButton);
-
-		return parameterPanel;
-	}
-
 	private void updateFilterValues(Map<String, Boolean> settings) {
 		filterValuePanel.removeAll();
 		if ((selection != null) && !InspectITConstants.NOFILTER.equals(selection)) {
-			JPanel filterValues = filterMap.get(selection).getPanel(new FilterValueObject());
-			filterValuePanel.add(filterValues);
+			JComponent filterValues = filterMap.get(selection).getPanel(new FilterValueObject());
+			filterValuePanel.add(filterValues, BorderLayout.CENTER);
 		}
 	}
 

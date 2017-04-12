@@ -15,7 +15,7 @@ import rocks.inspectit.ui.rcp.editor.map.filter.MarkerFilterElement;
 
 
 
-public class StringFilterPanel<T> extends JPanel {
+public class StringFilterPanel<T> extends JScrollPane {
 
 	/**
 	 * Default constructor which needs a set of keys and the corresponding map which maps values to
@@ -41,8 +41,8 @@ public class StringFilterPanel<T> extends JPanel {
 			newCboxPanel.add(newCbox);
 			temp.add(newCboxPanel);
 		}
-		JScrollPane pane = new JScrollPane(temp);
-		pane.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_ALWAYS);
-		this.add(pane);
+		this.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_NEVER);
+		this.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_ALWAYS);
+		this.setViewportView(temp);
 	}
 }

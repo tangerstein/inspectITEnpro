@@ -4,7 +4,7 @@ import java.awt.Color;
 import java.util.List;
 import java.util.Set;
 
-import javax.swing.JPanel;
+import javax.swing.JComponent;
 
 import rocks.inspectit.ui.rcp.editor.map.MapSubView.FilterValueObject;
 import rocks.inspectit.ui.rcp.editor.map.model.InspectITMarker;
@@ -71,7 +71,7 @@ public interface MapFilter<T> {
 	 *            The {FilterValueObject} to be used within the filter Panel.
 	 * @return The created filter Panel.
 	 */
-	JPanel getPanel(FilterValueObject filterValueObject);
+	JComponent getPanel(FilterValueObject filterValueObject);
 
 	/**
 	 * A Function which finalizes the filter assigning colors or transparencies to all stored values

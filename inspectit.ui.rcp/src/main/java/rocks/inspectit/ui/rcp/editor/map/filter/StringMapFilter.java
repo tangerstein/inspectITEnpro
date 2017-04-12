@@ -4,7 +4,7 @@ import java.awt.Color;
 import java.util.HashSet;
 import java.util.Set;
 
-import javax.swing.JPanel;
+import javax.swing.JComponent;
 
 import rocks.inspectit.ui.rcp.InspectITConstants;
 import rocks.inspectit.ui.rcp.editor.map.MapSubView.FilterValueObject;
@@ -55,7 +55,7 @@ public class StringMapFilter<T> extends AbstractMapFilter<T> {
 	 * {@inheritDoc}
 	 */
 	@Override
-	public JPanel getPanel(FilterValueObject filterValueObject) {
+	public JComponent getPanel(FilterValueObject filterValueObject) {
 		StringFilterPanel temp = new StringFilterPanel(filterValueObject, this.getKeys(), filterMap, toHide);
 		return temp;
 	}
