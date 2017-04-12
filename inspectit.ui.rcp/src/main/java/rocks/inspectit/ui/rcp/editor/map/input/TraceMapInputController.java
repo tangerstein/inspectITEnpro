@@ -9,6 +9,7 @@ import rocks.inspectit.shared.all.tracing.data.AbstractSpan;
 import rocks.inspectit.shared.all.tracing.data.Span;
 import rocks.inspectit.shared.cs.cmr.service.ISpanService;
 import rocks.inspectit.ui.rcp.editor.inputdefinition.InputDefinition;
+import rocks.inspectit.ui.rcp.editor.map.model.MapSettings;
 
 
 public class TraceMapInputController extends AbstractMapInputController {
@@ -35,7 +36,7 @@ public class TraceMapInputController extends AbstractMapInputController {
 	@Override
 	public void setData(List<? extends Object> data) {
 		if (spans.isEmpty()) {
-			mapSettings.setResetFilters(true);
+			MapSettings.getInstance().setResetFilters(true);
 		}
 		retrieveChildSpans(data);
 		System.out.println(spans.size());

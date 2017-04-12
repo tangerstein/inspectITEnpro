@@ -39,12 +39,6 @@ public abstract class AbstractMapInputController implements MapInputController {
 	Map<String, MapFilter> filterTypes;
 
 	/**
-	 * The current mapFilter.
-	 */
-	MapSettings mapSettings;
-
-
-	/**
 	 * The current selected tag.
 	 */
 	String selectedTag = InspectITConstants.NOFILTER;
@@ -69,7 +63,6 @@ public abstract class AbstractMapInputController implements MapInputController {
 	 */
 	public AbstractMapInputController() {
 		displayedMarkers = new ArrayList<>();
-		mapSettings = new MapSettings();
 		filterTypes = new HashMap<>();
 		resetFilters();
 	}
@@ -92,12 +85,12 @@ public abstract class AbstractMapInputController implements MapInputController {
 	 * @return The created circle marker.
 	 */
 	private InspectITMarker getCircle(Coordinate coord, double rad) {
-		return new InspectITClusterMarker(null, coord, rad * mapSettings.getClusteringCoefficient());
+		return new InspectITClusterMarker(null, coord, rad * MapSettings.getInstance().getClusteringCoefficient());
 	}
 
 	private void resetFilters() {
 		filterTypes.clear();
-		filterTypes.put(InspectITConstants.NOFILTER, FilterTypeMapping.getMapFilter(InspectITConstants.NOFILTER, mapSettings.isColoredMarkers()));
+		filterTypes.put(InspectITConstants.NOFILTER, FilterTypeMapping.getMapFilter(InspectITConstants.NOFILTER, MapSettings.getInstance().isColoredMarkers()));
 	}
 
 	/**
@@ -105,8 +98,8 @@ public abstract class AbstractMapInputController implements MapInputController {
 	 *
 	 */
 	protected void refreshFilters(List<AbstractSpan> data) {
-		if (mapSettings.isResetFilters()) {
-			mapSettings.setResetFilters(false);
+		if (MapSettings.getInstance().isResetFilters()) {
+			MapSettings.getInstance().setResetFilters(false);
 			resetFilters();
 		}
 		for (AbstractSpan marker : data) {
@@ -130,7 +123,7 @@ public abstract class AbstractMapInputController implements MapInputController {
 		if (filterTypes.containsKey(key)) {
 			filter = filterTypes.get(key);
 		} else {
-			if ((filter = FilterTypeMapping.getMapFilter(key, mapSettings.isColoredMarkers())) == null) {
+			if ((filter = FilterTypeMapping.getMapFilter(key, MapSettings.getInstance().isColoredMarkers())) == null) {
 				return;
 			}
 		}
@@ -159,15 +152,15 @@ public abstract class AbstractMapInputController implements MapInputController {
 	 */
 	@Override
 	public void setZoomLevel(int zoomlevel) {
-		mapSettings.setZoomLevel(zoomlevel);
+		MapSettings.getInstance().setZoomLevel(zoomlevel);
 	}
 
 
 	private double calculateRadius() {
-		if (mapSettings.getZoomLevel() < 2) {
-			return mapSettings.getClusteringConstant();
+		if (MapSettings.getInstance().getZoomLevel() < 2) {
+			return MapSettings.getInstance().getClusteringConstant();
 		}
-		return mapSettings.getClusteringConstant() / (Math.exp((mapSettings.getZoomLevel() * mapSettings.getClusteringCoefficient())));
+		return MapSettings.getInstance().getClusteringConstant() / (Math.exp((MapSettings.getInstance().getZoomLevel() * MapSettings.getInstance().getClusteringCoefficient())));
 
 	}
 
@@ -210,7 +203,7 @@ public abstract class AbstractMapInputController implements MapInputController {
 					(filterTypes.get(selectedTag).applyFilter(marker)==null)) {
 				continue;
 			}
-			if (!mapSettings.isClusteredMarkers()) {
+			if (!MapSettings.getInstance().isClusteredMarkers()) {
 				clusteredMarkers.add(marker);
 				continue;
 			}
@@ -224,9 +217,9 @@ public abstract class AbstractMapInputController implements MapInputController {
 			}
 
 		}
-		if (mapSettings.isClusteredMarkers()) {
+		if (MapSettings.getInstance().isClusteredMarkers()) {
 			for (Coordinate coord : coordSys.keySet()) {
-				if (coordSys.get(coord).size() > mapSettings.getClusteringTreshhold()) {
+				if (coordSys.get(coord).size() > MapSettings.getInstance().getClusteringTreshhold()) {
 					clusteredMarkers.add(getCircle(coord, calculateRadius()));
 				} else {
 					for (InspectITMarker mark : coordSys.get(coord)) {
@@ -256,18 +249,18 @@ public abstract class AbstractMapInputController implements MapInputController {
 
 	@Override
 	public Map<String, Boolean> getSettings() {
-		return mapSettings.getSettings();
+		return MapSettings.getInstance().getSettings();
 	}
 
 	@Override
 	public void settingChanged(String name, Object selected) {
-		mapSettings.setSetting(name, selected);
+		MapSettings.getInstance().setSetting(name, selected);
 		applySettings();
 	}
 
 	private void applySettings() {
 		MapFilter temp = filterTypes.get(selectedTag);
-		temp.setColored(mapSettings.isColoredMarkers());
+		temp.setColored(MapSettings.getInstance().isColoredMarkers());
 		filterTypes.put(selectedTag, temp);
 	}
 

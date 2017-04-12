@@ -9,12 +9,27 @@ import java.util.Map;
  */
 public class MapSettings {
 
+	/**
+	 * This saved as Singelton.
+	 */
+	private static MapSettings instance;
+
+	/**
+	 * Creates and returns the Singelton.
+	 *
+	 * @return the Singelton
+	 */
+	public static MapSettings getInstance() {
+		if (instance == null) {
+			instance = new MapSettings();
+		}
+		return instance;
+	}
 
 	/**
 	 * The current zoom level.
 	 */
 	int zoomLevel;
-
 
 	/**
 	 * The current minimum amount of markers in a coordinate space in order to cluster.
@@ -22,7 +37,7 @@ public class MapSettings {
 	int clusteringTreshhold;
 
 	/**
-	 * A flag which determines if the filters have to be reset upon refresh
+	 * A flag which determines if the filters have to be reset upon refresh.
 	 */
 	boolean resetFilters;
 
