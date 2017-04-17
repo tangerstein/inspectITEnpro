@@ -26,8 +26,21 @@ public interface MapInputController extends SubViewClassificationController {
 	 */
 	void setInputDefinition(InputDefinition inputDefinition);
 
+	/**
+	 * Function which sets the data to be displayed on the map.
+	 *
+	 * @param data
+	 *            The data to be displayed.
+	 */
 	void setData(List<? extends Object> data);
 
+	/**
+	 * Function which sets the data to be displayed on the map which equals the selection within the
+	 * tracing view.
+	 *
+	 * @param data
+	 *            The selected data to be displayed.
+	 */
 	void setDataSelection(List<? extends Object> data);
 
 	/**
@@ -37,7 +50,7 @@ public interface MapInputController extends SubViewClassificationController {
 	 *            The coordinate for which the markers are requested.
 	 * @return The list of (clustered) markers at this given coordinate.
 	 */
-	List<InspectITMarker> getClusteredMarkers(ICoordinate coordinate);
+	List<InspectITMarker<?>> getClusteredMarkers(ICoordinate coordinate);
 
 	/**
 	 * Resets the clustering of the markers by removing all entries from the clustering map.
@@ -54,19 +67,28 @@ public interface MapInputController extends SubViewClassificationController {
 	void setZoomLevel(int zoomLevel);
 
 	/**
-	 * @return
+	 * The function which returns the current map input which is to be displayed.
+	 *
+	 * @return The data to be displayed.
 	 */
 	Object getMapInput();
 
 	/**
-	 * @return
+	 * The function which returns the current boolean settings for the map.
+	 *
+	 * @return The current boolean settings of the map.
 	 */
 	Map<String, Boolean> getSettings();
 
 	/**
-	 * @return
+	 * The function which changes a given setting to the given value.
+	 *
+	 * @param name
+	 *            The setting to be changed.
+	 * @param value
+	 *            The value to be set for the given setting.
 	 */
-	void settingChanged(String name, Object selected);
+	void settingChanged(String name, Object value);
 
 	/**
 	 *
@@ -74,16 +96,27 @@ public interface MapInputController extends SubViewClassificationController {
 	void doRefresh();
 
 	/**
-	 * @return
+	 * The function returns the current map of all filter keys and their corresponding values.
+	 *
+	 * @return The map of current filters.
 	 */
-	Map<String, MapFilter> getMapFilter();
+	Map<String, MapFilter<?>> getMapFilter();
 
-	public void keySelectionChanged(String key);
+	/**
+	 * The function which is to be invoked upon the change of the filter key.
+	 *
+	 * @param key
+	 *            The new key which was selected.
+	 */
+	void keySelectionChanged(String key);
 
 
 	/**
-	 * {@inheritDoc}
+	 * The function which is to be invoked upon the change of the filter value.
+	 *
+	 * @param value
+	 *            The new value which was changed.
 	 */
-	public void valueSelectionChanged(Object value);
+	void valueSelectionChanged(Object value);
 
 }

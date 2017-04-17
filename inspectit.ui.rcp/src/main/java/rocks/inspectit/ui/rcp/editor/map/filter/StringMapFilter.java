@@ -11,12 +11,40 @@ import rocks.inspectit.ui.rcp.editor.map.MapSubView.FilterValueObject;
 import rocks.inspectit.ui.rcp.editor.map.model.InspectITMarker;
 import rocks.inspectit.ui.rcp.editor.map.model.StringFilterPanel;
 
+/**
+ * The map filter which takes care about the available filter keys and the coloring for the
+ * corresponding values.
+ *
+ * @param <T>
+ *            The generic parameter of which type the keys are.
+ *
+ * @author Christopher Völker, Simon Lehmann
+ *
+ */
 public class StringMapFilter<T> extends AbstractMapFilter<T> {
 
+	/**
+	 * The set of values belonging to the set tag key of this filter.
+	 *
+	 */
 	Set<String> values;
-	Set<T> toHide;
-	StringFilterPanel filterPanel;
 
+	/**
+	 * The set of values which are to be hidden from the map.
+	 *
+	 */
+	Set<T> toHide;
+
+	/**
+	 * The constructor for this filter which needs a tag key as well as the initial setting for
+	 * coloring.
+	 *
+	 * @param tagKey
+	 *            The tag key this filter belongs to.
+	 * @param colored
+	 *            The initial boolean value for coloring.
+	 *
+	 */
 	public StringMapFilter(String tagKey, boolean colored) {
 		super(tagKey, colored);
 		values = new HashSet<>();
@@ -24,6 +52,9 @@ public class StringMapFilter<T> extends AbstractMapFilter<T> {
 		initColors();
 	}
 
+	/**
+	 * {@inheritDoc}
+	 */
 	@Override
 	public void initColors() {
 		colorList.clear();
@@ -56,13 +87,14 @@ public class StringMapFilter<T> extends AbstractMapFilter<T> {
 	 */
 	@Override
 	public JComponent getPanel(FilterValueObject filterValueObject) {
-		StringFilterPanel temp = new StringFilterPanel(filterValueObject, this.getKeys(), filterMap, toHide);
+		StringFilterPanel<T> temp = new StringFilterPanel<T>(filterValueObject, this.getKeys(), filterMap);
 		return temp;
 	}
 
 	/**
 	 * {@inheritDoc}
 	 */
+	@SuppressWarnings("unchecked")
 	@Override
 	public void updateFilter() {
 		filterMap.clear();
@@ -93,10 +125,11 @@ public class StringMapFilter<T> extends AbstractMapFilter<T> {
 	 * {@inheritDoc}
 	 */
 	@Override
-	public InspectITMarker applyFilter(InspectITMarker marker) {
+	public InspectITMarker<?> applyFilter(InspectITMarker<?> marker) {
 		if (tagKey.equals(InspectITConstants.NOFILTER)) {
 			return adaptMarker(marker, new MarkerFilterElement());
 		}
+		@SuppressWarnings("unchecked")
 		MarkerFilterElement elem = getFilter((T) marker.getTags().get(tagKey));
 		if (elem.isVisible) {
 			return adaptMarker(marker, elem);
@@ -104,7 +137,18 @@ public class StringMapFilter<T> extends AbstractMapFilter<T> {
 		return null;
 	}
 
-	private InspectITMarker adaptMarker(InspectITMarker marker, MarkerFilterElement element) {
+	/**
+	 * This function takes a {@link InspectITMarker} as well as a corresponding
+	 * {@link MarkerFilterElement} which is applied on the marker.
+	 *
+	 * @param marker
+	 *            The marker the filter is to be applied on.
+	 * @param element
+	 *            The {@link MarkerFilterElement} which is to be applied on the marker.
+	 * @return The filter on which the filter was applied on.
+	 *
+	 */
+	private InspectITMarker<?> adaptMarker(InspectITMarker<?> marker, MarkerFilterElement element) {
 		marker.setStyle(element.style());
 		marker.setVisible(element.isVisible());
 		return marker;
@@ -113,12 +157,13 @@ public class StringMapFilter<T> extends AbstractMapFilter<T> {
 	/**
 	 * {@inheritDoc}
 	 */
+	@SuppressWarnings("unchecked")
 	@Override
 	public void changeSelection(Object selection) {
 		if (toHide.contains(selection)) {
 			toHide.remove(selection);
 		} else {
-			toHide.add((T)selection);
+			toHide.add((T) selection);
 		}
 	}
 

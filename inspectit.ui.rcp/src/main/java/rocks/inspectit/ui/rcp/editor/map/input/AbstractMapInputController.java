@@ -21,22 +21,28 @@ import rocks.inspectit.ui.rcp.editor.map.model.InspectITMarker;
 import rocks.inspectit.ui.rcp.editor.map.model.InspectITSpanMarker;
 import rocks.inspectit.ui.rcp.editor.map.model.MapSettings;
 
+/**
+ * The abstract implementation of the MapInputController interface for the map sub view.
+ *
+ * @author Christopher Völker
+ *
+ */
 public abstract class AbstractMapInputController implements MapInputController {
 
 	/**
 	 * A map which holds the markers clustered to specific coordinate spaces.
 	 */
-	Map<Coordinate, List<InspectITMarker>> coordSys = new HashMap<Coordinate, List<InspectITMarker>>();
+	Map<Coordinate, List<InspectITMarker<?>>> coordSys = new HashMap<Coordinate, List<InspectITMarker<?>>>();
 
 	/**
 	 * A list of all available data markers.
 	 */
-	List<InspectITMarker> displayedMarkers = new ArrayList<InspectITMarker>();
+	List<InspectITMarker<?>> displayedMarkers = new ArrayList<InspectITMarker<?>>();
 
 	/**
 	 * The current mapFilter.
 	 */
-	Map<String, MapFilter> filterTypes;
+	Map<String, MapFilter<?>> filterTypes;
 
 	/**
 	 * The current selected tag.
@@ -84,10 +90,14 @@ public abstract class AbstractMapInputController implements MapInputController {
 	 *            The radius for circle marker.
 	 * @return The created circle marker.
 	 */
-	private InspectITMarker getCircle(Coordinate coord, double rad) {
-		return new InspectITClusterMarker(null, coord, rad * MapSettings.getInstance().getClusteringCoefficient());
+	@SuppressWarnings({ "rawtypes" })
+	private InspectITMarker<?> getCircle(Coordinate coord, double rad) {
+		return new InspectITClusterMarker(coord, rad * MapSettings.getInstance().getClusteringCoefficient());
 	}
 
+	/**
+	 * The function which resets all filters.
+	 */
 	private void resetFilters() {
 		filterTypes.clear();
 		filterTypes.put(InspectITConstants.NOFILTER, FilterTypeMapping.getMapFilter(InspectITConstants.NOFILTER, MapSettings.getInstance().isColoredMarkers()));
@@ -96,6 +106,8 @@ public abstract class AbstractMapInputController implements MapInputController {
 	/**
 	 * refreshes the filter within the sub view controlled by this input controller.
 	 *
+	 * @param data
+	 *            The data to refresh the filter from.
 	 */
 	protected void refreshFilters(List<AbstractSpan> data) {
 		if (MapSettings.getInstance().isResetFilters()) {
@@ -111,19 +123,31 @@ public abstract class AbstractMapInputController implements MapInputController {
 		}
 		// filters are to be reset only once!
 
-		for (MapFilter t : filterTypes.values()) {
+		for (MapFilter<?> t : filterTypes.values()) {
 			t.updateFilter();
 		}
 
 
 	}
 
+	/**
+	 * The function which adds a given value to the corresponding given key within the filter map.
+	 * It is only added if it is not already in it otherwise the existing value is updated..
+	 *
+	 * @param key
+	 *            The key to add the value to.
+	 * @param value
+	 *            The value to be added to the given key.
+	 */
+	@SuppressWarnings("unchecked")
 	private void addFilterValue(String key, Object value) {
+		@SuppressWarnings("rawtypes")
 		MapFilter filter;
 		if (filterTypes.containsKey(key)) {
 			filter = filterTypes.get(key);
 		} else {
-			if ((filter = FilterTypeMapping.getMapFilter(key, MapSettings.getInstance().isColoredMarkers())) == null) {
+			filter = FilterTypeMapping.getMapFilter(key, MapSettings.getInstance().isColoredMarkers());
+			if (filter == null) {
 				return;
 			}
 		}
@@ -136,15 +160,15 @@ public abstract class AbstractMapInputController implements MapInputController {
 	 */
 	@Override
 	public void resetClustering() {
-		coordSys = new HashMap<Coordinate, List<InspectITMarker>>();
+		coordSys = new HashMap<Coordinate, List<InspectITMarker<?>>>();
 	}
 
 	/**
 	 * {@inheritDoc}
 	 */
 	@Override
-	public List<InspectITMarker> getClusteredMarkers(ICoordinate coordinate) {
-		return this.coordSys.get(calculateCoordinate(coordinate));
+	public List<InspectITMarker<?>> getClusteredMarkers(ICoordinate coordinate) {
+		return this.coordSys.get(calculateZoneCoordinate(coordinate));
 	}
 
 	/**
@@ -155,7 +179,13 @@ public abstract class AbstractMapInputController implements MapInputController {
 		MapSettings.getInstance().setZoomLevel(zoomlevel);
 	}
 
-
+	/**
+	 * This function calculates the radius for clustered markers depending on the current zoom
+	 * level. The setting for the clustering constants and the clustering coefficient influences the
+	 * calculation as well.
+	 *
+	 * @return The calculated radius.
+	 */
 	private double calculateRadius() {
 		if (MapSettings.getInstance().getZoomLevel() < 2) {
 			return MapSettings.getInstance().getClusteringConstant();
@@ -164,43 +194,74 @@ public abstract class AbstractMapInputController implements MapInputController {
 
 	}
 
-
-	private Coordinate calculateCoordinate(ICoordinate coord) {
+	/**
+	 * This function calculates the coordinates for the clustering zone a given coordinate belongs
+	 * to.
+	 *
+	 * @param coord
+	 *            The coordinate to map to the clustering zone it belongs to.
+	 * @return The coordinate of the clustering zone.
+	 */
+	private Coordinate calculateZoneCoordinate(ICoordinate coord) {
 		// Radius has to be considered for determining the Zone coordinate
-		double zoneLength = 2*calculateRadius();
-		double lat = calculateZoneCenter(coord.getLat(), 90.00, zoneLength);
+		double zoneLength = 2 * calculateRadius();
+		double lat = calculateCenter(coord.getLat(), 90.00, zoneLength);
 
-		double lon = calculateZoneCenter(coord.getLon(), 180.00, zoneLength);
+		double lon = calculateCenter(coord.getLon(), 180.00, zoneLength);
 
 		return new Coordinate(lat, lon);
 	}
 
-
-	private Coordinate calculateCoordinate(InspectITMarker marker) {
-		return calculateCoordinate(marker.getCoordinate());
+	/**
+	 * This function calculates the coordinates for the clustering zone a given marker belongs to.
+	 *
+	 * @param marker
+	 *            The marker to map to the clustering zone it belongs to.
+	 * @return The coordinate of the clustering zone the marker belongs to.
+	 */
+	private Coordinate calculateCoordinate(InspectITMarker<?> marker) {
+		return calculateZoneCoordinate(marker.getCoordinate());
 	}
 
-
-	private double calculateZoneCenter(double value, double offset, double zoneLength) {
-		value = value+offset;
-		int temp = (int)(value/zoneLength);
-		double result = zoneLength*temp;
-		result = result-offset;
-		result = result+(zoneLength/2);
+	/**
+	 * This function calculates the center of a zone for one coordinate value using the given zone
+	 * length as well as the offset.
+	 *
+	 * @param value
+	 *            The value to calculate the center from.
+	 * @param offset
+	 *            The offset which is needed for proper calculation and depends on whether latitude
+	 *            or longitude values are to be handled.
+	 * @param zoneLength
+	 *            The zone length of the clustering zone.
+	 * @return The value of the center.
+	 */
+	private double calculateCenter(double value, double offset, double zoneLength) {
+		value = value + offset;
+		int temp = (int) (value / zoneLength);
+		double result = zoneLength * temp;
+		result = result - offset;
+		result = result + (zoneLength / 2);
 		return result;
 
 	}
 
+	/**
+	 * This functions creates and clusters the markers on the map if the corresponding flag is set.
+	 * Clustering markers depends on the setting of the clustering threshold.
+	 *
+	 * @param data
+	 *            The List of spans to create and cluster the markers from.
+	 */
 	protected void clusterMarkers(List<AbstractSpan> data) {
 		resetClustering();
-		List<InspectITMarker> clusteredMarkers = new ArrayList<InspectITMarker>();
+		List<InspectITMarker<?>> clusteredMarkers = new ArrayList<InspectITMarker<?>>();
 		for (int i = 0; i < data.size(); i++) {
-			InspectITMarker marker = createMarker(data.get(i));
+			InspectITMarker<?> marker = createMarker(data.get(i));
 			if (marker == null) {
 				continue;
 			}
-			if ((filterTypes.get(selectedTag) != null) &&
-					(filterTypes.get(selectedTag).applyFilter(marker)==null)) {
+			if ((filterTypes.get(selectedTag) != null) && (filterTypes.get(selectedTag).applyFilter(marker) == null)) {
 				continue;
 			}
 			if (!MapSettings.getInstance().isClusteredMarkers()) {
@@ -210,8 +271,8 @@ public abstract class AbstractMapInputController implements MapInputController {
 			Coordinate temp = calculateCoordinate(marker);
 			if (coordSys.containsKey(temp)) {
 				coordSys.get(temp).add(marker);
-			} else{
-				List<InspectITMarker> tempList = new ArrayList<InspectITMarker>();
+			} else {
+				List<InspectITMarker<?>> tempList = new ArrayList<InspectITMarker<?>>();
 				tempList.add(marker);
 				coordSys.put(temp, tempList);
 			}
@@ -222,7 +283,7 @@ public abstract class AbstractMapInputController implements MapInputController {
 				if (coordSys.get(coord).size() > MapSettings.getInstance().getClusteringTreshhold()) {
 					clusteredMarkers.add(getCircle(coord, calculateRadius()));
 				} else {
-					for (InspectITMarker mark : coordSys.get(coord)) {
+					for (InspectITMarker<?> mark : coordSys.get(coord)) {
 						clusteredMarkers.add(mark);
 					}
 				}
@@ -231,7 +292,17 @@ public abstract class AbstractMapInputController implements MapInputController {
 		this.displayedMarkers = clusteredMarkers;
 	}
 
-	private InspectITMarker createMarker(AbstractSpan span) {
+	/**
+	 * This function creates a marker from a given span if (and only if) it contains a latitude and
+	 * longitude value.
+	 *
+	 * @param span
+	 *            The span to create the marker from.
+	 * @return The marker created from the span, null if no latitude and longitude value are
+	 *         provided by the marker.
+	 */
+	@SuppressWarnings({ "rawtypes", "unchecked" })
+	private InspectITMarker<?> createMarker(AbstractSpan span) {
 		Map<String, String> tags = span.getTags();
 		if (tags.containsKey(MobileTags.HTTP_REQUEST_LATITUDE) && tags.containsKey(MobileTags.HTTP_REQUEST_LONGITUDE)) {
 			return new InspectITSpanMarker(span, new Coordinate(Double.parseDouble(tags.get(MobileTags.HTTP_REQUEST_LATITUDE)), Double.parseDouble(tags.get(MobileTags.HTTP_REQUEST_LONGITUDE))));
@@ -242,24 +313,40 @@ public abstract class AbstractMapInputController implements MapInputController {
 		}
 	}
 
+	/**
+	 *
+	 * {@inheritDoc}
+	 */
+
 	@Override
 	public Object getMapInput() {
 		return displayedMarkers;
 	}
 
+	/**
+	 *
+	 * {@inheritDoc}
+	 */
 	@Override
 	public Map<String, Boolean> getSettings() {
 		return MapSettings.getInstance().getSettings();
 	}
 
+	/**
+	 *
+	 * {@inheritDoc}
+	 */
 	@Override
-	public void settingChanged(String name, Object selected) {
-		MapSettings.getInstance().setSetting(name, selected);
+	public void settingChanged(String name, Object value) {
+		MapSettings.getInstance().setSetting(name, value);
 		applySettings();
 	}
 
+	/**
+	 * This function applies the coloring settings to the current selected tag.
+	 */
 	private void applySettings() {
-		MapFilter temp = filterTypes.get(selectedTag);
+		MapFilter<?> temp = filterTypes.get(selectedTag);
 		temp.setColored(MapSettings.getInstance().isColoredMarkers());
 		filterTypes.put(selectedTag, temp);
 	}
@@ -268,7 +355,7 @@ public abstract class AbstractMapInputController implements MapInputController {
 	 * {@inheritDoc}
 	 */
 	@Override
-	public Map<String, MapFilter> getMapFilter() {
+	public Map<String, MapFilter<?>> getMapFilter() {
 		return filterTypes;
 	}
 
@@ -286,9 +373,8 @@ public abstract class AbstractMapInputController implements MapInputController {
 	 */
 	@Override
 	public void valueSelectionChanged(Object value) {
-		MapFilter temp = filterTypes.get(selectedTag);
+		MapFilter<?> temp = filterTypes.get(selectedTag);
 		temp.changeSelection(value);
 		filterTypes.put(selectedTag, temp);
 	}
-
 }

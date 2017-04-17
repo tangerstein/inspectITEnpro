@@ -2,20 +2,42 @@ package rocks.inspectit.ui.rcp.editor.map.filter;
 
 import java.awt.Color;
 
-import javax.swing.JPanel;
+import javax.swing.JComponent;
 
 import rocks.inspectit.ui.rcp.editor.map.MapSubView.FilterValueObject;
 import rocks.inspectit.ui.rcp.editor.map.model.InspectITMarker;
 import rocks.inspectit.ui.rcp.editor.map.model.NumericFilterPanel;
 import rocks.inspectit.ui.rcp.editor.map.model.NumericRange;
 
+/**
+ * The filter element for numeric values.
+ *
+ * @author Christopher Völker
+ *
+ * @param <T>
+ *            The generic type of this numeric element.
+ */
 public class NumericMapFilter<T> extends AbstractMapFilter<T> {
 
+	/**
+	 * The total range which should be allowed by the sliders.
+	 */
 	NumericRange totalRange;
+	/**
+	 * The actual range (lower and upper bound) which represents the current value of the sliders.
+	 */
 	NumericRange filteredRange;
-	private int alphaStart = 100;
-	private int alphaSteps = 5;
 
+	/**
+	 * The constructor for this filter which needs a tag key as well as the initial setting for
+	 * coloring.
+	 *
+	 * @param tagKey
+	 *            The tag key this filter belongs to.
+	 * @param colored
+	 *            The initial boolean value for coloring.
+	 *
+	 */
 	public NumericMapFilter(String tagKey, Boolean colored) {
 		super(tagKey, colored);
 		totalRange = new NumericRange();
@@ -56,7 +78,7 @@ public class NumericMapFilter<T> extends AbstractMapFilter<T> {
 	 * {@inheritDoc}
 	 */
 	@Override
-	public JPanel getPanel(FilterValueObject filterValueObject) {
+	public JComponent getPanel(FilterValueObject filterValueObject) {
 		NumericFilterPanel temp = new NumericFilterPanel(filterValueObject, totalRange, filteredRange);
 		return temp;
 	}
@@ -64,6 +86,7 @@ public class NumericMapFilter<T> extends AbstractMapFilter<T> {
 	/**
 	 * {@inheritDoc}
 	 */
+	@SuppressWarnings("unchecked")
 	@Override
 	public void updateFilter() {
 		filterMap.clear();
@@ -80,12 +103,13 @@ public class NumericMapFilter<T> extends AbstractMapFilter<T> {
 	 * {@inheritDoc}
 	 */
 	@Override
-	public InspectITMarker applyFilter(InspectITMarker marker) {
+	public InspectITMarker<?> applyFilter(InspectITMarker<?> marker) {
 		Double temp = Double.parseDouble((String) marker.getTags().get(tagKey));
 		if (!filteredRange.withinRange(temp)) {
 			return null;
 		}
-		MarkerFilterElement element = getFilter((T)temp);
+		@SuppressWarnings("unchecked")
+		MarkerFilterElement element = getFilter((T) temp);
 		marker.setStyle(element.style());
 		marker.setVisible(element.isVisible());
 		return marker;

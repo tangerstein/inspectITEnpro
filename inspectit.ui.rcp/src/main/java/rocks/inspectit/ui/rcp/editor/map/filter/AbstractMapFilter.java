@@ -7,14 +7,44 @@ import java.util.NavigableMap;
 import java.util.Set;
 import java.util.TreeMap;
 
+/**
+ * The map filter which takes care about the available filter keys and the coloring for the
+ * corresponding values.
+ *
+ * @param <T>
+ *            The generic parameter of which type the keys are.
+ *
+ * @author Christopher Völker, Simon Lehmann
+ *
+ */
 public abstract class AbstractMapFilter<T> implements MapFilter<T> {
-
+	/**
+	 * The tag key this filter was created for.
+	 */
 	protected String tagKey;
+	/**
+	 * The current color list for this filter.
+	 */
 	protected List<Color> colorList;
+	/**
+	 * The map containing the mapping of values to {@link MarkerFilterElement}.
+	 */
 	protected NavigableMap<T, MarkerFilterElement> filterMap;
+	/**
+	 * The boolean flag for colored markers.
+	 */
 	boolean isColored;
 
-
+	/**
+	 * The constructor for this filter which needs a tag key as well as the initial setting for
+	 * coloring.
+	 *
+	 * @param tagKey
+	 *            The tag key this filter belongs to.
+	 * @param colored
+	 *            The initial boolean value for coloring.
+	 *
+	 */
 	public AbstractMapFilter(String tagKey, boolean colored) {
 		this.isColored = colored;
 		colorList = new ArrayList<>();
@@ -61,8 +91,8 @@ public abstract class AbstractMapFilter<T> implements MapFilter<T> {
 		if (filterMap.isEmpty()) {
 			return new MarkerFilterElement();
 		}
-		if (key!=null) {
-			if (filterMap.ceilingEntry(key)!=null) {
+		if (key != null) {
+			if (filterMap.ceilingEntry(key) != null) {
 				return filterMap.ceilingEntry(key).getValue();
 			}
 		}
@@ -80,6 +110,7 @@ public abstract class AbstractMapFilter<T> implements MapFilter<T> {
 	/**
 	 * {@inheritDoc}
 	 */
+	@SuppressWarnings("unchecked")
 	@Override
 	public T getValue(T key) {
 		return (T) getFilter(key);

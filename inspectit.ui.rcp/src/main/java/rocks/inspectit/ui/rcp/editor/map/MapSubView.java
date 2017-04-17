@@ -39,11 +39,13 @@ import rocks.inspectit.ui.rcp.editor.ISubView;
 import rocks.inspectit.ui.rcp.editor.map.filter.MapFilter;
 import rocks.inspectit.ui.rcp.editor.map.input.MapInputController;
 import rocks.inspectit.ui.rcp.editor.map.model.InspectITMarker;
-import rocks.inspectit.ui.rcp.editor.map.model.MapSettings;
 import rocks.inspectit.ui.rcp.editor.preferences.PreferenceEventCallback.PreferenceEvent;
 import rocks.inspectit.ui.rcp.editor.preferences.PreferenceId;
 
 /**
+ * This class implements the abstract class AbstractSubView and takes care about the Map integration
+ * as sub view into the tracing view.
+ *
  * @author Christopher Völker
  *
  */
@@ -54,9 +56,24 @@ public class MapSubView extends AbstractSubView {
 	 */
 	private Composite swtAwtComponent;
 
+	/**
+	 * The JComboBox holding all available tags to filter after.
+	 */
 	private JComboBox<String> tagComboBox;
+
+	/**
+	 * The panel holding all values to the chosen tag key.
+	 */
 	private JPanel filterValuePanel;
+
+	/**
+	 * The menu enabling the user to change some of the map settings.
+	 */
 	private JMenuBar optionsMenu;
+
+	/**
+	 * The current filter key which is selected.
+	 */
 	private String selection;
 
 	/**
@@ -64,7 +81,10 @@ public class MapSubView extends AbstractSubView {
 	 */
 	private JPanel filter;
 
-	Map<String, MapFilter> filterMap;
+	/**
+	 * The Component holding the map and the filter panel.
+	 */
+	private Map<String, MapFilter<?>> filterMap;
 
 	/**
 	 * The map frame.
@@ -94,6 +114,7 @@ public class MapSubView extends AbstractSubView {
 		mapInputController.setInputDefinition(getRootEditor().getInputDefinition());
 	}
 
+	@SuppressWarnings("unchecked")
 	/**
 	 * {@inheritDoc}
 	 */
@@ -116,9 +137,14 @@ public class MapSubView extends AbstractSubView {
 		frame.setLayout(new BorderLayout());
 		mapViewer = new JMapViewer() {
 
+			/**
+			 *
+			 */
+			private static final long serialVersionUID = 1L;
+
 			@Override
 			public String getToolTipText(MouseEvent e) {
-				List<InspectITMarker> temp = mapInputController.getClusteredMarkers(this.getPosition(e.getX(), e.getY()));
+				List<InspectITMarker<?>> temp = mapInputController.getClusteredMarkers(this.getPosition(e.getX(), e.getY()));
 				if ((temp != null) && (temp.size() > 4)) {
 					return String.valueOf(temp.size());
 				}
@@ -135,9 +161,9 @@ public class MapSubView extends AbstractSubView {
 			public void processCommand(JMVCommandEvent arg0) {
 				if (arg0.getCommand().equals(COMMAND.ZOOM)) {
 					zoomLevelChanged();
-				} else {
-					// this would be triggered if the map is moved!
 				}
+				// if the argument does not match the zoom command this listener is triggered by
+				// moving the map.
 			}
 		});
 		zoomLevelChanged();
@@ -156,13 +182,13 @@ public class MapSubView extends AbstractSubView {
 	 */
 	@Override
 	public Set<PreferenceId> getPreferenceIds() {
-		// TODO Auto-generated method stub
 		return Collections.emptySet();
 	}
 
 	/**
 	 * {@inheritDoc}
 	 */
+	@SuppressWarnings("unchecked")
 	@Override
 	public void doRefresh() {
 		mapInputController.doRefresh();
@@ -170,10 +196,10 @@ public class MapSubView extends AbstractSubView {
 		filterMap = mapInputController.getMapFilter();
 		optionsMenu.removeAll();
 		optionsMenu.add(createOptionMenu(mapInputController.getSettings()));
-		updateFilterValues(mapInputController.getSettings());
-		filterValuePanel.updateUI();
-		optionsMenu.updateUI();
-		mapViewer.updateUI();
+		updateFilterValues();
+		/*
+		 * filterValuePanel.updateUI(); optionsMenu.updateUI(); mapViewer.updateUI();
+		 */
 		filter.updateUI();
 	}
 
@@ -196,9 +222,15 @@ public class MapSubView extends AbstractSubView {
 		doRefresh();
 	}
 
+	/**
+	 * This function sets the selected spans to the given list of spans.
+	 *
+	 * @param data
+	 *            The list of spans which were selected.
+	 */
 	public void setSelection(List<? extends Object> data) {
 		mapInputController.setDataSelection(data);
-		mapInputController.settingChanged(MapSettings.settings.coloredMarkers.toString(), false);
+		// mapInputController.settingChanged(MapSettings.settings.coloredMarkers.toString(), false);
 		doRefresh();
 	}
 
@@ -207,7 +239,6 @@ public class MapSubView extends AbstractSubView {
 	 */
 	@Override
 	public Control getControl() {
-		// TODO Auto-generated method stub
 		return swtAwtComponent;
 	}
 
@@ -241,6 +272,13 @@ public class MapSubView extends AbstractSubView {
 		doRefresh();
 	}
 
+	/**
+	 * This function creates the option menu from the given settings map.
+	 *
+	 * @param settings
+	 *            The settings map to create the menu from.
+	 * @return The created menu.
+	 */
 	private JMenu createOptionMenu(Map<String, Boolean> settings) {
 		JMenu menu = new JMenu("Options");
 		for (String name : settings.keySet()) {
@@ -258,7 +296,10 @@ public class MapSubView extends AbstractSubView {
 		return menu;
 	}
 
-	private void updateFilterValues(Map<String, Boolean> settings) {
+	/**
+	 * This functions updates the values within the filter value panel.
+	 */
+	private void updateFilterValues() {
 		filterValuePanel.removeAll();
 		if ((selection != null) && !InspectITConstants.NOFILTER.equals(selection)) {
 			JComponent filterValues = filterMap.get(selection).getPanel(new FilterValueObject());
@@ -266,15 +307,18 @@ public class MapSubView extends AbstractSubView {
 		}
 	}
 
+	/**
+	 * This function refreshes the keys which can be selected within the filter panel. It only adds
+	 * keys which are not yet in the combo box.
+	 */
 	private void refreshKeyBox() {
-		// tagComboBox.removeAllItems();
 		// add this manually in order to have it as first entry
 		if (tagComboBox.getComponentCount() == 0) {
 			tagComboBox.addItem(InspectITConstants.NOFILTER);
 			selection = InspectITConstants.NOFILTER;
 		}
 		if (filterMap.entrySet() != null) {
-			for (Entry<String, MapFilter> tag : filterMap.entrySet()) {
+			for (Entry<String, MapFilter<?>> tag : filterMap.entrySet()) {
 				Boolean unknownKey = true;
 				for (int index = 0; index < tagComboBox.getItemCount(); index++) {
 					if (tagComboBox.getItemAt(index).equals(tag.getKey())) {
@@ -302,8 +346,23 @@ public class MapSubView extends AbstractSubView {
 		});
 	}
 
+	/**
+	 * This class was created in order to enable filters to propagate changes in the filter values
+	 * to {@link MapInputController}.
+	 *
+	 * @author Christopher Völker
+	 *
+	 */
 	public class FilterValueObject {
 
+		/**
+		 * The function which is to be called at any filter value selection change. In case of
+		 * String values the value being selected or deselected is passed. In case of numeric values
+		 * the new NumericRange containing the latest lower and upper bound is passes.
+		 *
+		 * @param value
+		 *            The value which was selected or changed.
+		 */
 		public void selectionChanged(Object value) {
 			mapInputController.valueSelectionChanged(value);
 			doRefresh();

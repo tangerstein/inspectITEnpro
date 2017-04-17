@@ -10,7 +10,17 @@ import org.openstreetmap.gui.jmapviewer.MapMarkerDot;
 import rocks.inspectit.shared.all.tracing.data.Span;
 import rocks.inspectit.ui.rcp.InspectITConstants;
 
-public class InspectITSpanMarker<T extends Span> extends MapMarkerDot implements InspectITMarker {
+/**
+ * The map marker for single spans which extends the {@link MapMarkerDot} class of the JMapViewer
+ * library. It also implements the custom InspectITMarker interface for inspectIT.
+ *
+ * @param <T>
+ *            The generic parameter has to be a type extending Span.
+ *
+ * @author Christopher Völker, Simon Lehmann
+ *
+ */
+public class InspectITSpanMarker<T extends Span> extends MapMarkerDot implements InspectITMarker<T> {
 
 	/**
 	 * The span stored in this marker.
@@ -48,6 +58,4 @@ public class InspectITSpanMarker<T extends Span> extends MapMarkerDot implements
 		map.putAll(span.getTags());
 		return map;
 	}
-
-
 }

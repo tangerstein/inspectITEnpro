@@ -4,13 +4,15 @@ import java.util.HashMap;
 import java.util.Map;
 
 /**
+ * The current map settings for the map.
+ *
  * @author Christopher Völker
  *
  */
-public class MapSettings {
+public final class MapSettings {
 
 	/**
-	 * This saved as Singelton.
+	 * This is saved as Singelton.
 	 */
 	private static MapSettings instance;
 
@@ -61,8 +63,38 @@ public class MapSettings {
 	 */
 	boolean clusteredMarkers;
 
-	public enum settings {
-		clusteredMarkers, clusteringConstant, coloredMarkers, zoomLevel, clusteringTreshhold, resetFilters, clusteringCoefficient;
+	/**
+	 * The enum which holds a mapping to string representations for all settings.
+	 */
+	public enum Settings {
+		/**
+		 * The tag for clustered markers.
+		 */
+		clusteredMarkers,
+		/**
+		 * The tag for the clustering constant.
+		 */
+		clusteringConstant,
+		/**
+		 * The tag for colored markers.
+		 */
+		coloredMarkers,
+		/**
+		 * The tag for clustered markers.
+		 */
+		zoomLevel,
+		/**
+		 * The tag for the zoom level.
+		 */
+		clusteringThreshold,
+		/**
+		 * The tag for the clustering threshold.
+		 */
+		resetFilters,
+		/**
+		 * The tag for the clustering coefficient.
+		 */
+		clusteringCoefficient;
 
 		@Override
 		public String toString() {
@@ -73,7 +105,7 @@ public class MapSettings {
 				return "coloredMarkers";
 			case zoomLevel:
 				return "zoomLevel";
-			case clusteringTreshhold:
+			case clusteringThreshold:
 				return "clusteringTreshhold";
 			case resetFilters:
 				return "resetFilters";
@@ -81,21 +113,30 @@ public class MapSettings {
 				return "clusteringCoefficient";
 			case clusteringConstant:
 				return "clusteringConstant";
+			default:
+				return "";
 			}
-			return "";
 		}
 	}
 
-
+	/**
+	 * The function which returns a map containing the settings for the map. Due to simplicity only
+	 * boolean values are returned at the moment.
+	 *
+	 * @return The map which contains the mapping from settings to the corresponding values.
+	 */
 	public Map<String, Boolean> getSettings() {
 		Map<String, Boolean> map = new HashMap<>();
-		map.put(settings.clusteredMarkers.toString(), clusteredMarkers);
-		map.put(settings.coloredMarkers.toString(), coloredMarkers);
-		map.put(settings.resetFilters.toString(), resetFilters);
+		map.put(Settings.clusteredMarkers.toString(), clusteredMarkers);
+		map.put(Settings.coloredMarkers.toString(), coloredMarkers);
+		map.put(Settings.resetFilters.toString(), resetFilters);
 		return map;
 	}
 
-	public MapSettings() {
+	/**
+	 * The private constructor which initializes the settings with default values.
+	 */
+	private MapSettings() {
 		zoomLevel = 0;
 		clusteringTreshhold = 5;
 		resetFilters = true;
@@ -105,20 +146,29 @@ public class MapSettings {
 		clusteringConstant = 15.00;
 	}
 
+	/**
+	 * A function to change a specific setting. Therefore it takes a name for the setting as well as
+	 * a corresponding value to be set.
+	 *
+	 * @param name
+	 *            The name of the setting to be set.
+	 * @param value
+	 *            The value to be set for given setting.
+	 */
 	public void setSetting(String name, Object value) {
-		if (settings.clusteredMarkers.toString().equals(name)) {
+		if (Settings.clusteredMarkers.toString().equals(name)) {
 			clusteredMarkers = (boolean) value;
-		} else if (settings.coloredMarkers.toString().equals(name)) {
+		} else if (Settings.coloredMarkers.toString().equals(name)) {
 			coloredMarkers = (boolean) value;
-		} else if (settings.zoomLevel.toString().equals(name)) {
+		} else if (Settings.zoomLevel.toString().equals(name)) {
 			zoomLevel = (int) value;
-		} else if (settings.clusteringTreshhold.toString().equals(name)) {
+		} else if (Settings.clusteringThreshold.toString().equals(name)) {
 			clusteringTreshhold = (int) value;
-		} else if (settings.resetFilters.toString().equals(name)) {
+		} else if (Settings.resetFilters.toString().equals(name)) {
 			resetFilters = (boolean) value;
-		} else if (settings.clusteringCoefficient.toString().equals(name)) {
+		} else if (Settings.clusteringCoefficient.toString().equals(name)) {
 			clusteringCoefficient = (double) value;
-		} else if (settings.clusteringConstant.toString().equals(name)) {
+		} else if (Settings.clusteringConstant.toString().equals(name)) {
 			clusteringConstant = (double) value;
 		}
 	}
@@ -255,6 +305,4 @@ public class MapSettings {
 	public void setClusteredMarkers(boolean clusteredMarkers) {
 		this.clusteredMarkers = clusteredMarkers;
 	}
-
-
 }

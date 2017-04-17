@@ -11,13 +11,31 @@ import rocks.inspectit.shared.cs.cmr.service.ISpanService;
 import rocks.inspectit.ui.rcp.editor.inputdefinition.InputDefinition;
 import rocks.inspectit.ui.rcp.editor.map.model.MapSettings;
 
-
+/**
+ * The actual implementation of the {@link MapInputController} for the map sub view within the
+ * tracing view.
+ *
+ * @author Christopher Völker
+ *
+ */
 public class TraceMapInputController extends AbstractMapInputController {
 
+	/**
+	 * The {@link ISpanService} which further span can be retrieved from.
+	 */
 	ISpanService spanService;
+	/**
+	 * The list of all spans known to the tracing view.
+	 */
 	List<AbstractSpan> spans;
+	/**
+	 * The list of spans of the selection of spans on the tracing view.
+	 */
 	List<AbstractSpan> selection;
 
+	/**
+	 * The constructor of this class which initializes the lists.
+	 */
 	public TraceMapInputController() {
 		super();
 		spans = new ArrayList<>();
@@ -33,27 +51,41 @@ public class TraceMapInputController extends AbstractMapInputController {
 		spanService = inputDefinition.getRepositoryDefinition().getSpanService();
 	}
 
+	/**
+	 *
+	 * {@inheritDoc}
+	 */
 	@Override
 	public void setData(List<? extends Object> data) {
 		if (spans.isEmpty()) {
 			MapSettings.getInstance().setResetFilters(true);
 		}
-		retrieveChildSpans(data);
-		System.out.println(spans.size());
-
+		spans = retrieveChildSpans(data);
 		refreshFilters(spans);
 	}
 
+	/**
+	 *
+	 * {@inheritDoc}
+	 */
 	@Override
 	public void setDataSelection(List<? extends Object> data) {
-		selection = (List<AbstractSpan>) data;
-		if (!selection.isEmpty()) {
-			retrieveChildSpans(data);
+		if (data.isEmpty()) {
+			selection = new ArrayList<>();
+			return;
 		}
-		System.out.println(selection.size());
+		selection = retrieveChildSpans(data);
 	}
 
-	private void retrieveChildSpans(List<? extends Object> data) {
+	/**
+	 * The function which retrieves the children of all given spans.
+	 *
+	 * @param data
+	 *            The spans to retrieve the children from.
+	 *
+	 * @return The list of child spans.
+	 */
+	private List<AbstractSpan> retrieveChildSpans(List<? extends Object> data) {
 		List<AbstractSpan> list = new ArrayList<>();
 		for (Object rootSpan : data) {
 			for (Span span : spanService.getSpans(((AbstractSpan) rootSpan).getSpanIdent().getTraceId())) {
@@ -72,18 +104,22 @@ public class TraceMapInputController extends AbstractMapInputController {
 				}
 			}
 		}
-		spans = list;
+		return list;
 	}
 
+	/**
+	 *
+	 * {@inheritDoc}
+	 */
 	@Override
 	public void doRefresh() {
-		for (Object o : spans) {
-			long id = ((AbstractSpan) o).getSpanIdent().getTraceId();
+		if (selection.isEmpty()) {
+			refreshFilters(spans);
+			clusterMarkers(spans);
+		} else {
+			refreshFilters(selection);
+			clusterMarkers(selection);
 		}
-		refreshFilters(spans);
-		clusterMarkers(spans);
-
 
 	}
-
 }

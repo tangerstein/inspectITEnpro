@@ -14,19 +14,34 @@ import rocks.inspectit.ui.rcp.editor.map.MapSubView.FilterValueObject;
 import rocks.inspectit.ui.rcp.editor.map.filter.MarkerFilterElement;
 
 
-
+/**
+ * A Panel which takes care about all values of type string which can be shown or hidden on the map.
+ *
+ * @param <T>
+ *            The type of the set of keys needed to access the values.
+ *
+ * @author Christopher Völker, Simon Lehmann
+ *
+ */
 public class StringFilterPanel<T> extends JScrollPane {
+
+	/**
+	 *
+	 */
+	private static final long serialVersionUID = 1L;
 
 	/**
 	 * Default constructor which needs a set of keys and the corresponding map which maps values to
 	 * {@MarkerFilterElement}.
 	 *
+	 * @param filterValueObject
+	 *            The object which serves as callback for any value being changed.
 	 * @param keys
 	 *            The set of keys.
 	 * @param map
 	 *            The value to {@MarkerFilterElement} map.
 	 */
-	public StringFilterPanel(final FilterValueObject filterValueObject, Set<T> keys, NavigableMap<T, MarkerFilterElement> map, Set<String> toHide) {
+	public StringFilterPanel(final FilterValueObject filterValueObject, Set<T> keys, NavigableMap<T, MarkerFilterElement> map) {
 		JPanel temp = new JPanel();
 		for (Object value : keys) {
 			JPanel newCboxPanel = new JPanel();
